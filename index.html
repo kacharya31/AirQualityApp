@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ozone Levels Choropleth Map</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        #map svg {
+            height: 600px;
+            width: 1000px;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: 50px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <input type="range" id="yearSlider" min="2000" max="2016" step="1" value="2000">
+    <div id="map"></div>
+    <script>
+        // Load GeoJSON data
+        d3.json("modified_states_geojson.json").then(function(geoData) {
+            renderMap(geoData);
+        });
+
+        function renderMap(geoData) {
+            var projection = d3.geoAlbersUsa();
+            var path = d3.geoPath().projection(projection);
+            var svg = d3.select("#map").append("svg");
+
+            // Define a color scale
+            var colorScale = d3.scaleLinear()
+                .domain([d3.min(geoData.features, d => d.properties.ozone_2000), d3.max(geoData.features, d => d.properties.ozone_2000)])
+                .range(["lightblue", "darkblue"]);
+
+            // Draw state boundaries and color them
+            svg.selectAll(".state")
+                .data(geoData.features)
+                .enter().append("path")
+                .attr("class", "state")
+                .attr("d", path)
+                .style("fill", function(d) { return colorScale(d.properties.ozone_2000); });
+
+            // Tooltip
+            var tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip");
+
+            svg.selectAll(".state")
+                .on("mouseover", function(event, d) {
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html(d.properties.NAME + "<br/>" + d.properties['ozone_2000'])
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.transition().duration(500).style("opacity", 0);
+                });
+
+            // Slider
+            d3.select("#yearSlider").on("input", function() {
+                updateMap(+this.value, geoData, colorScale, svg, tooltip);
+            });
+        }
+
+        function updateMap(year, geoData, colorScale, svg, tooltip) {
+            colorScale.domain([d3.min(geoData.features, d => d.properties['ozone_' + year]), d3.max(geoData.features, d => d.properties['ozone_' + year])]);
+
+            svg.selectAll(".state")
+                .transition()
+                .style("fill", function(d) { return colorScale(d.properties['ozone_' + year]); });
+
+            svg.selectAll(".state")
+                .on("mouseover", function(event, d) {
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html(d.properties.NAME + "<br/>" + d.properties['ozone_' + year])
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                });
+        }
+    </script>
+</body>
+</html>
