@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ozone Levels Choropleth Map</title>
+    <title>Pollution Levels Choropleth Map</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <style>
         #map svg {
             height: 600px;
             width: 1000px;
         }
-
         .tooltip {
             position: absolute;
             text-align: center;
@@ -17,15 +16,24 @@
             height: 50px;
             padding: 2px;
             font: 12px sans-serif;
-            background: lightsteelblue;
+            background: white;
             border: 0px;
             border-radius: 8px;
             pointer-events: none;
             opacity: 0;
         }
+        h2 {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+    <h2 id="yearTitle">Year: 2000</h2>
+    <select id="pollutantSelector">
+        <option value="ozone">Ozone (O3)</option>
+        <option value="no2">Nitrogen Dioxide (NO2)</option>
+        <option value="pm25">Particulate Matter 2.5 (PM2.5)</option>
+    </select>
     <input type="range" id="yearSlider" min="2000" max="2016" step="1" value="2000">
     <div id="map"></div>
     <script>
@@ -34,23 +42,54 @@
             renderMap(geoData);
         });
 
+        function getColorScale(pollutant) {
+            // Define color scales for each pollutant
+            var scales = {
+                'ozone': d3.scaleLinear().range(["lightblue", "darkblue"]),
+                'no2': d3.scaleLinear().range(["lightcoral", "darkred"]),
+                'pm25': d3.scaleLinear().range(["lightgreen", "darkgreen"])
+            };
+            return scales[pollutant];
+        }
+
         function renderMap(geoData) {
             var projection = d3.geoAlbersUsa();
             var path = d3.geoPath().projection(projection);
             var svg = d3.select("#map").append("svg");
 
-            // Define a color scale
-            var colorScale = d3.scaleLinear()
-                .domain([d3.min(geoData.features, d => d.properties.ozone_2000), d3.max(geoData.features, d => d.properties.ozone_2000)])
-                .range(["lightblue", "darkblue"]);
+            // Initial render of the map
+            var initialPollutant = 'ozone';
+            var colorScale = getColorScale(initialPollutant);
+            updateMap(+document.getElementById('yearSlider').value, initialPollutant, geoData, colorScale, svg, path);
 
-            // Draw state boundaries and color them
+            // Event listener for the pollutant selector
+            d3.select("#pollutantSelector").on("change", function() {
+                var selectedPollutant = this.value;
+                var colorScale = getColorScale(selectedPollutant);
+                updateMap(+document.getElementById('yearSlider').value, selectedPollutant, geoData, colorScale, svg, path);
+            });
+
+            // Event listener for the year slider
+            d3.select("#yearSlider").on("input", function() {
+                var selectedYear = +this.value;
+                var selectedPollutant = document.getElementById('pollutantSelector').value;
+                var colorScale = getColorScale(selectedPollutant);
+                updateMap(selectedYear, selectedPollutant, geoData, colorScale, svg, path);
+                document.getElementById('yearTitle').innerText = 'Year: ' + selectedYear; // Update the title
+            });
+        }
+
+        function updateMap(year, pollutant, geoData, colorScale, svg, path) {
+            var dataKey = pollutant + '_' + year;
+            colorScale.domain([d3.min(geoData.features, d => d.properties[dataKey]), d3.max(geoData.features, d => d.properties[dataKey])]);
+
             svg.selectAll(".state")
                 .data(geoData.features)
-                .enter().append("path")
+                .join("path")
                 .attr("class", "state")
                 .attr("d", path)
-                .style("fill", function(d) { return colorScale(d.properties.ozone_2000); });
+                .transition()
+                .style("fill", function(d) { return colorScale(d.properties[dataKey]); });
 
             // Tooltip
             var tooltip = d3.select("body").append("div")
@@ -59,33 +98,12 @@
             svg.selectAll(".state")
                 .on("mouseover", function(event, d) {
                     tooltip.transition().duration(200).style("opacity", .9);
-                    tooltip.html(d.properties.NAME + "<br/>" + d.properties['ozone_2000'])
+                    tooltip.html(d.properties.NAME + "<br/>" + d.properties[dataKey])
                         .style("left", (event.pageX) + "px")
                         .style("top", (event.pageY - 28) + "px");
                 })
                 .on("mouseout", function() {
                     tooltip.transition().duration(500).style("opacity", 0);
-                });
-
-            // Slider
-            d3.select("#yearSlider").on("input", function() {
-                updateMap(+this.value, geoData, colorScale, svg, tooltip);
-            });
-        }
-
-        function updateMap(year, geoData, colorScale, svg, tooltip) {
-            colorScale.domain([d3.min(geoData.features, d => d.properties['ozone_' + year]), d3.max(geoData.features, d => d.properties['ozone_' + year])]);
-
-            svg.selectAll(".state")
-                .transition()
-                .style("fill", function(d) { return colorScale(d.properties['ozone_' + year]); });
-
-            svg.selectAll(".state")
-                .on("mouseover", function(event, d) {
-                    tooltip.transition().duration(200).style("opacity", .9);
-                    tooltip.html(d.properties.NAME + "<br/>" + d.properties['ozone_' + year])
-                        .style("left", (event.pageX) + "px")
-                        .style("top", (event.pageY - 28) + "px");
                 });
         }
     </script>

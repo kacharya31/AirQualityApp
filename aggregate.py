@@ -1,27 +1,22 @@
 import pandas as pd
 
-# List to hold DataFrames temporarily
-dfs = []
-
-# Assuming files are named '2000.csv', '2001.csv', ..., '2016.csv'
-for year in range(2000, 2017):
-    # Construct the file name for each year
-    file_name = f'o3_data/{year}.rds.csv'
+def aggregate_pollutant_data(data_folder, pollutant_name):
+    dfs = []
+    for year in range(2000, 2017):
+        file_name = f'{data_folder}/{year}.rds.csv'
+        yearly_data = pd.read_csv(file_name)
+        yearly_data['YEAR'] = year
+        dfs.append(yearly_data)
     
-    # Read the data from the year file
-    yearly_data = pd.read_csv(file_name)
-    
-    # Add a column for the year
-    yearly_data['YEAR'] = year
-    
-    # Add the yearly data to the list
-    dfs.append(yearly_data)
+    combined_data = pd.concat(dfs, ignore_index=True)
+    aggregated_data = combined_data.groupby(['STATE', 'YEAR'])[pollutant_name].mean().reset_index()
+    return aggregated_data
 
-# Combine all DataFrames in the list into one DataFrame
-combined_data = pd.concat(dfs, ignore_index=True)
+o3_data = aggregate_pollutant_data('o3_data', 'ozone')
+o3_data.to_csv('aggregated_o3_by_state_and_year.csv', index=False)
 
-# Group by STATE and YEAR and calculate the mean ozone levels
-aggregated_data = combined_data.groupby(['STATE', 'YEAR'])['ozone'].mean().reset_index()
+no2_data = aggregate_pollutant_data('no2_data', 'no2')
+no2_data.to_csv('aggregated_no2_by_state_and_year.csv', index=False)
 
-# Save the aggregated data to a new CSV file
-aggregated_data.to_csv('aggregated_ozone_by_state_and_year.csv', index=False)
+pm25_data = aggregate_pollutant_data('pm2.5_data', 'pm25')
+pm25_data.to_csv('aggregated_pm25_by_state_and_year.csv', index=False)
