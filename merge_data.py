@@ -1,33 +1,52 @@
 import json
 import pandas as pd
 
-# Load the aggregated data for each pollutant
+# Load the original data
 o3_data = pd.read_csv('aggregated_ozone_by_state_and_year.csv')
 no2_data = pd.read_csv('aggregated_no2_by_state_and_year.csv')
 pm25_data = pd.read_csv('aggregated_pm25_by_state_and_year.csv')
 
+# Load additional datasets
+coal_data = pd.read_csv('coal.csv')
+gas_data = pd.read_csv('gas_data.csv')
+petroleum_data = pd.read_csv('petroleum.csv')
+population_data = pd.read_csv('population.csv')
+
+# Correct the State column for merging
+coal_data = coal_data.rename(columns={'State': 'STATE'})
+gas_data = gas_data.rename(columns={'State': 'STATE'})
+petroleum_data = petroleum_data.rename(columns={'State': 'STATE'})
+population_data = population_data.rename(columns={'State': 'STATE'})
+
+coal_data = coal_data.rename(columns={'Year': 'YEAR'})
+gas_data = gas_data.rename(columns={'Year': 'YEAR'})
+petroleum_data = petroleum_data.rename(columns={'Year': 'YEAR'})
+population_data = population_data.rename(columns={'Year': 'YEAR'})
+
+# Function to merge pollutant data into GeoJSON features
+def merge_data(geojson_data, data, key, feature_key):
+    for feature in geojson_data['features']:
+        state_code = feature['properties']['STUSPS']
+        for year in range(2000, 2017):
+            value = data[(data['STATE'] == state_code) & (data['YEAR'] == year)][key].values
+            if len(value) > 0:
+                feature['properties'][f'{key}_{year}'] = round(value[0], 2)
+            else:
+                feature['properties'][f'{key}_{year}'] = None
+
 # Load the GeoJSON file
-geojson_file_path = 'states.geojson'
-with open(geojson_file_path, 'r') as file:
+with open('states.geojson', 'r') as file:
     geojson_data = json.load(file)
 
-# Function to add pollutant data to GeoJSON features
-def add_pollutant_data(pollutant_data, feature, state_code, year, pollutant_name):
-    pollutant_value = pollutant_data[(pollutant_data['STATE'] == state_code) & (pollutant_data['YEAR'] == year)][pollutant_name].values
-    if len(pollutant_value) > 0:
-        feature['properties'][f'{pollutant_name}_{year}'] = pollutant_value[0]
-    else:
-        feature['properties'][f'{pollutant_name}_{year}'] = None
+# Merge each dataset into the GeoJSON
+merge_data(geojson_data, o3_data, 'ozone', 'OZONE')
+merge_data(geojson_data, no2_data, 'no2', 'NO2')
+merge_data(geojson_data, pm25_data, 'pm25', 'PM2.5')
+merge_data(geojson_data, coal_data, 'Coal', 'COAL')
+merge_data(geojson_data, gas_data, 'gas_data', 'GAS')
+merge_data(geojson_data, petroleum_data, 'Petroleum', 'PETROLEUM')
+merge_data(geojson_data, population_data, 'Population Density', 'POP_DENSITY')
 
-# Merge the pollutant data with the GeoJSON features
-for feature in geojson_data['features']:
-    state_code = feature['properties']['STUSPS']
-    for year in range(2000, 2017):
-        add_pollutant_data(o3_data, feature, state_code, year, 'ozone')
-        add_pollutant_data(no2_data, feature, state_code, year, 'no2')
-        add_pollutant_data(pm25_data, feature, state_code, year, 'pm25')
-
-# Saving the modified GeoJSON to a new file
-modified_geojson_path = 'modified_states_geojson.json'
-with open(modified_geojson_path, 'w') as file:
+# Save the modified GeoJSON
+with open('modified_states_geojson.json', 'w') as file:
     json.dump(geojson_data, file)
