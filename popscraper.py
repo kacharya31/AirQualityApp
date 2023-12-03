@@ -93,14 +93,13 @@ for year in range(2000, 2017):
         # Parse the HTML content
         soup = BeautifulSoup(response.content, 'html.parser')
         table = soup.find('table', id='release-elements-tree')
-
         # Extract data from each row
         for i, row in enumerate(table.find_all('tr')[1:]):
-            if i < len(state_abbreviations):
+            if i < len(state_abbreviations)+1:
                 cols = row.find_all('td')
                 if cols:
                     population = cols[2].text.strip().replace(',', '').replace('.', '')
-                    state = list(state_abbreviations.values())[i]
+                    state = list(state_abbreviations.values())[i-1]
                     population_data = population_data.append({'State': state, 'Year': year, 'Population': population}, ignore_index=True)
 
 
@@ -109,9 +108,9 @@ population_data['Population'] = pd.to_numeric(population_data['Population'], err
 merged_data = population_data.merge(land_area_df, on='State', how='inner')
 
 merged_data['Population Density'] = merged_data['Population'] / merged_data['Land Area']
+population_data = population_data[population_data['State'] != 'DC']
 
 population_density_df = merged_data
-
 #COAL DATA
 coal_data = pd.read_excel('coal.xlsx', skiprows=2)  # Adjust the skiprows parameter if the header is not in the second row
 state_names_to_abbreviations = {v: k for v, k in state_abbreviations.items()}
