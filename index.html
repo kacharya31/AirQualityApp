@@ -5,6 +5,26 @@
     <title>Pollution Levels</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <style>
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        #map-container {
+            flex: 1; /* Take up the remaining space */
+        }
+
+        #description-container {
+            flex-basis: 300px; /* Fixed width for the description container */
+            margin-left: 20px; /* Spacing between map and description */
+        }
+
+        #legend {
+            margin-top: 20px; /* Spacing between units description and legend */
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -73,17 +93,17 @@
             transition: opacity 0.3s;
         }
         .tooltip-content {
-            text-align: left; /* Align text to the left */
-            font-size: 14px; /* Adjust font size as needed */
+            text-align: left;
+            font-size: 14px;
         }
         .legend {
             position: absolute;
             bottom: 50px;
-            right: 50px;
+            right: 85px;
             padding: 10px;
             background: white;
             border-radius: 5px;
-            font: 12px sans-serif;
+            font: 20px sans-serif;
         }
         .legend-key {
             display: flex;
@@ -164,36 +184,39 @@
             </div>
         </div>
     </div>
-    <div id="map"></div>
-    <div class="legend" id="legend"></div>
-    
-    <!-- Units Section -->
-    <div id="units-section">
-      <h3>Units Description</h3>
-      <p><strong>Ozone (O3):</strong> ppb (parts per billion)</p>
-      <p><strong>Nitrogen Dioxide (NO2):</strong> ppb (parts per billion)</p>
-      <p><strong>Particulate Matter 2.5 (PM2.5):</strong> μg/m³ (micrograms per cubic meter)</p>
-      <p><strong>Coal:</strong> million metric tons of CO</p>
-      <p><strong>Gas:</strong> million metric tons of CO</p>
-      <p><strong>Petroleum:</strong> million metric tons of CO</p>
-      <p><strong>Population Density:</strong> persons per square mile</p>
+
+    <div class="main-container">
+        <div id="map-container">
+            <h1 id="mainTitle">Pollutant Levels Map</h1>
+            <div id="map"></div>
+        </div>
+        <div id="description-container">
+            <div id="units-description">
+                <h3>Units Description</h3>
+                <p><strong>Ozone (O3):</strong> ppb (parts per billion)</p>
+                <p><strong>Nitrogen Dioxide (NO2):</strong> ppb (parts per billion)</p>
+                <p><strong>Particulate Matter 2.5 (PM2.5):</strong> μg/m³ (micrograms per cubic meter)</p>
+                <p><strong>Coal:</strong> million metric tons of CO</p>
+                <p><strong>Gas:</strong> million metric tons of CO</p>
+                <p><strong>Petroleum:</strong> million metric tons of CO</p>
+                <p><strong>Population Density:</strong> persons per square mile</p>
+            </div>
+            <div class="legend" id="legend"></div>
+        </div>
     </div>
     <script>
-        // Load GeoJSON data
         d3.json("modified_states_geojson.json").then(function(geoData) {
             renderMap(geoData);
         });
 
         function getColorScale(pollutant, values) {
-            // Define color scales for each pollutant
             var scales = {
                 'ozone': d3.scaleQuantize().range(["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"]),
                 'no2': d3.scaleQuantize().range(["#feedde", "#fdbe85", "#fd8d3c", "#e6550d", "#a63603"]),
                 'pm25': d3.scaleQuantize().range(["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"])
             };
-            // Calculate the extent of the values for the given pollutant
-            const extent = d3.extent(values, d => d.properties[pollutant + '_2016']); // Use year 2016 for the demo
-            // Set the domain for the color scale based on the extent
+            const extent = d3.extent(values, d => d.properties[pollutant + '_2016']);
+
             return scales[pollutant].domain(extent);
         }
 
@@ -287,7 +310,7 @@
                 .attr("class", "legend-title")
                 .attr("x", 0) // x position of the title
                 .attr("y", -10) // y position of the title
-                .style("font-size", "16px") // font size of the title
+                .style("font-size", "20px") // font size of the title
                 .style("font-weight", "bold") // font weight of the title
                 .text("Legend"); // text content of the title
 
