@@ -5,7 +5,6 @@ import pandas as pd
 # State abbreviations
 land_area_list = [
     {"State": "Alabama", "Land Area": 50645},
-    {"State": "Alaska", "Land Area": 570641},
     {"State": "Arizona", "Land Area": 113594},
     {"State": "Arkansas", "Land Area": 52035},
     {"State": "California", "Land Area": 155779},
@@ -15,7 +14,6 @@ land_area_list = [
     {"State": "District of Columbia", "Land Area": 61},
     {"State": "Florida", "Land Area": 53625},
     {"State": "Georgia", "Land Area": 57513},
-    {"State": "Hawaii", "Land Area": 6423},
     {"State": "Idaho", "Land Area": 82643},
     {"State": "Illinois", "Land Area": 55519},
     {"State": "Indiana", "Land Area": 35826},
@@ -60,10 +58,10 @@ land_area_list = [
 land_area_df = pd.DataFrame(land_area_list)
 
 state_abbreviations = {
-    'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR',
+    'Alabama': 'AL',  'Arizona': 'AZ', 'Arkansas': 'AR',
     'California': 'CA', 'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE',
     'District of Columbia': 'DC', 'Florida': 'FL', 'Georgia': 'GA',
-    'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN',
+    'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN',
     'Iowa': 'IA', 'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA',
     'Maine': 'ME', 'Maryland': 'MD', 'Massachusetts': 'MA', 'Michigan': 'MI',
     'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO', 'Montana': 'MT',
