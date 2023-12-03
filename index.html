@@ -59,10 +59,9 @@
         }
         .tooltip {
             position: absolute;
-            text-align: center;
-            width: 120px;
-            height: 150px;
-            padding: 2px;
+            text-align: left; /* Align text to the left */
+            padding: 10px; /* Adjust padding as needed */
+            max-width: 300px; /* Max width, can adjust as needed */
             font-size: 14px;
             background-color: white;
             border-radius: 8px;
@@ -71,6 +70,8 @@
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s;
+            /* Add a slight margin to prevent the tooltip from touching the cursor */
+            margin-top: 20px;
         }
         .tooltip-content {
             text-align: left; /* Align text to the left */
@@ -144,6 +145,12 @@
         #pollutantSelector {
             order: -1;
         }
+        .state {
+        fill: #aaa; /* Default fill color, it will be overridden by D3 styles */
+        stroke: #fff; /* Color of the state boundaries */
+        stroke-width: 2; /* Thickness of the state boundaries */
+        stroke-linejoin: round; /* Smooths the corners where paths meet */
+        }
 
     </style>
 </head>
@@ -154,9 +161,9 @@
     <div class="controls">
         <div class="selector-slider-container">
             <select id="pollutantSelector">
-                <option value="ozone">Ozone (O3) - ppb</option>
-                <option value="no2">Nitrogen Dioxide (NO2) - ppb</option>
-                <option value="pm25">Particulate Matter 2.5 (PM2.5) - μg/m³</option>
+                <option value="ozone">Ozone (O3)</option>
+                <option value="no2">Nitrogen Dioxide (NO2)</option>
+                <option value="pm25">Particulate Matter 2.5 (PM2.5)</option>
             </select>
             <div class="title-slider-container">
                 <p id="yearTitle">Year: <span id="yearLabel">2000</span></p>
@@ -198,46 +205,69 @@
         }
 
         function renderMap(geoData) {
-            var projection = d3.geoAlbersUsa();
+            // Filter out Alaska and Hawaii by their state codes (assuming they are 'AK' and 'HI')
+            var filteredGeoData = {
+                ...geoData,
+                features: geoData.features.filter(function(d) {
+                    return d.properties.STUSPS !== "AK" && d.properties.STUSPS !== "HI";
+                })
+            };
+
+            var projection = d3.geoAlbersUsa(); // Albers projection is commonly used for the USA, which by default excludes AK and HI
             var path = d3.geoPath().projection(projection);
             var svg = d3.select("#map").append("svg");
             var initialYear = +document.getElementById('yearSlider').value;
             var initialPollutant = document.getElementById('pollutantSelector').value;
-            var colorScale = getColorScale(initialPollutant, geoData.features);
+            var colorScale = getColorScale(initialPollutant, filteredGeoData.features);
+
+            // Bind the filtered data to the SVG elements
+            svg.selectAll(".state")
+                .data(filteredGeoData.features)
+                .enter()
+                .append("path")
+                .attr("class", "state")
+                .attr("d", path)
+                .style("fill", d => colorScale(d.properties[initialPollutant + '_' + initialYear]));
 
             // Initial render of the map with the default year and pollutant
-            updateMap(initialYear, initialPollutant, geoData, colorScale, svg, path);
-            updateLegend(initialYear, initialPollutant, geoData, colorScale); // Make sure geoData is passed correctly
+            updateMap(initialYear, initialPollutant, filteredGeoData, colorScale, svg, path);
+            updateLegend(initialYear, initialPollutant, filteredGeoData, colorScale); // Make sure geoData is passed correctly
 
             d3.select("#yearSlider").on("input", function() {
                 var selectedYear = +this.value;
                 var selectedPollutant = document.getElementById('pollutantSelector').value;
-                var colorScale = getColorScale(selectedPollutant, geoData.features);
-                updateMap(selectedYear, selectedPollutant, geoData, colorScale, svg, path);
+                var colorScale = getColorScale(selectedPollutant, filteredGeoData.features);
+                updateMap(selectedYear, selectedPollutant, filteredGeoData, colorScale, svg, path);
                 document.getElementById('yearLabel').innerText = selectedYear;
-                updateLegend(selectedYear, selectedPollutant, geoData, colorScale);
+                updateLegend(selectedYear, selectedPollutant, filteredGeoData, colorScale);
             });
 
             // In the event listener for the pollutant selector:
             d3.select("#pollutantSelector").on("change", function() {
                 var selectedYear = +document.getElementById('yearSlider').value;
                 var selectedPollutant = this.value;
-                var colorScale = getColorScale(selectedPollutant, geoData.features);
-                updateMap(selectedYear, selectedPollutant, geoData, colorScale, svg, path);
-                updateLegend(selectedYear, selectedPollutant, geoData, colorScale);
+                var colorScale = getColorScale(selectedPollutant, filteredGeoData.features);
+                updateMap(selectedYear, selectedPollutant, filteredGeoData, colorScale, svg, path);
+                updateLegend(selectedYear, selectedPollutant, filteredGeoData, colorScale);
             });
         }
 
-        function updateMap(year, pollutant, geoData, colorScale, svg, path) {
+        function updateMap(year, pollutant, filteredGeoData, colorScale, svg, path) {
             var dataKey = pollutant + '_' + year;
             // Set the fill for each state based on the pollutant data
+
+            const pollutantDisplayNames = {
+            ozone: "Ozone",
+            no2: "Nitrogen Dioxide",
+            pm25: "Particulate Matter 2.5"
+            };
+
             svg.selectAll(".state")
-                .data(geoData.features)
+                .data(filteredGeoData.features)
                 .join("path")
                 .attr("class", "state")
                 .attr("d", path)
-                .transition()
-                .style("fill", d => colorScale(d.properties[dataKey]));
+                .style("fill", d => colorScale(d.properties[dataKey]))
 
             // Tooltip
             var tooltip = d3.select("body").append("div")
@@ -248,37 +278,45 @@
                 window.location.href = '/state-trends.html?state=' + d.properties.STUSPS;
             })
                 
-                .on("mouseover", function(event, d) {
-                tooltip.transition().duration(200).style("opacity", .9);
+            .on("mouseover", function(event, d) {
+                // Get the currently selected pollutant from the dropdown
+                var selectedPollutant = document.getElementById('pollutantSelector').value;
                 var year = document.getElementById('yearSlider').value;
+
+                // Get the display name for the pollutant
+                var pollutantDisplayName = pollutantDisplayNames[selectedPollutant] || selectedPollutant;
+
+                // Retrieve the data for the current year and the selected pollutant
+                var pollutantValue = d.properties[selectedPollutant + "_" + year].toFixed(2);
                 var coal = d.properties[`Coal_${year}`] || "N/A";
                 var gas = d.properties[`gas_data_${year}`] || "N/A";
                 var petroleum = d.properties[`Petroleum_${year}`] || "N/A";
                 var popDensity = d.properties[`Population Density_${year}`] || "N/A";
 
-                tooltip.html(`
-                    <div class="tooltip-content">
-                        <strong>${d.properties.NAME}</strong><br><br> <!-- Line break after state name -->
-                        <strong>Main Data:</strong><br>
-                        O3: ${d.properties[`ozone_${year}`].toFixed(2)}<br>
-                        NO2: ${d.properties[`no2_${year}`].toFixed(2)}<br>
-                        PM2.5: ${d.properties[`pm25_${year}`].toFixed(2)}<br><br> <!-- Line break before additional data -->
-                        <strong>Additional Data:</strong><br>
-                        Coal: ${parseFloat(coal).toFixed(2)}<br>
-                        Gas: ${parseFloat(gas).toFixed(2)}<br>
-                        Petroleum: ${parseFloat(petroleum).toFixed(2)}<br>
-                        Population Density: ${parseFloat(popDensity).toFixed(2)}
-                    </div>
-                `)
-                .style("left", (event.pageX) + "px")
-                .style("top", (event.pageY - 28) + "px");
+                // Construct the HTML content for the tooltip
+                // Make sure the tooltip content is correctly formatted
+                var tooltipContent = `
+                    <strong>${d.properties.NAME}</strong><br><br>
+                    <strong>Main Data:</strong><br>
+                    ${pollutantDisplayName}: ${parseFloat(pollutantValue).toFixed(2)}<br><br>
+                    <strong>Additional Data:</strong><br>
+                    Coal: ${parseFloat(coal).toFixed(2)}<br>
+                    Gas: ${parseFloat(gas).toFixed(2)}<br>
+                    Petroleum: ${parseFloat(petroleum).toFixed(2)}<br>
+                    Population Density: ${parseFloat(popDensity).toFixed(2)}
+                `;
+
+                tooltip.html(tooltipContent)
+                    .style("left", (event.pageX) + "px")
+                    .style("top", (event.pageY - 28) + "px")
+                    .transition().duration(200).style("opacity", 1);
             })
             .on("mouseout", function() {
                 tooltip.transition().duration(500).style("opacity", 0);
             });
         }
 
-        function updateLegend(year, pollutant, geoData, colorScale) {
+        function updateLegend(year, pollutant, filteredGeoData, colorScale) {
             var legend = d3.select("#legend");
             legend.selectAll("*").remove(); // Clear existing legend
 
@@ -291,14 +329,14 @@
                 .style("font-weight", "bold") // font weight of the title
                 .text("Legend"); // text content of the title
 
-            if (!geoData || !geoData.features) {
-                console.error('GeoData is not loaded properly.');
+            if (!filteredGeoData || !filteredGeoData.features) {
+                console.error('filteredGeoData is not loaded properly.');
                 return;
             }
 
             // Get the data for the current year and pollutant
             var dataKey = pollutant + '_' + year;
-            var dataValues = geoData.features.map(function(d) {
+            var dataValues = filteredGeoData.features.map(function(d) {
                 return d.properties[dataKey];
             }).filter(function(value) {
                 return value != null;
