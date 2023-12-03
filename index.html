@@ -244,9 +244,9 @@
                 .attr("class", "tooltip");
 
             svg.selectAll(".state")
-                .on("click", function(event, d) {
-                    window.location.href = '/state-trends.html?state=' + d.properties.STUSPS + '&trend=Coal';
-                })
+                    .on("click", function(event, d) {
+                window.location.href = '/state-trends.html?state=' + d.properties.STUSPS;
+            })
                 
                 .on("mouseover", function(event, d) {
                 tooltip.transition().duration(200).style("opacity", .9);

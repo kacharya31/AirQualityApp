@@ -68,7 +68,9 @@
         <option value="Gas">Gas</option>
         <option value="Coal">Coal</option>
         <option value="Petroleum">Petroleum</option>
-        <option value="trend5">Trend 5</option>
+        <option value="o3">o3</option>
+        <option value="no2">no2</option>
+        <option value="pm2.5">pm2.5</option>
     </select>
     <div id="chartContainer">
         <canvas id="trendChart"></canvas>
@@ -104,60 +106,69 @@
         }
 
         function updateChart(trend, stateCode) {
-            if (trend !== "Coal") return;
+            var csvFile = trend.toLowerCase() + ".csv";
+            var valueKey = trend.charAt(0).toLowerCase() + trend.slice(1);
+            
+            d3.csv(csvFile, function(d) {
+                return {
+                    index: +d.index,
+                    state: d.state,
+                    year: +d.year,
+                    value: +d[valueKey]
+                };
+            }).then(function(data) {
+                var filteredData = data.filter(d => d.state === stateCode);
+                var years = filteredData.map(d => d.year);
+                var values = filteredData.map(d => d.value);
 
-            var filteredData = coalData.filter(d => d.state === stateCode);
-            var years = filteredData.map(d => d.year);
-            var values = filteredData.map(d => d.coal);
+                var ctx = document.getElementById('trendChart').getContext('2d');
+                if (window.myChart) window.myChart.destroy(); // Destroy the previous chart instance if exists
 
-            var ctx = document.getElementById('trendChart').getContext('2d');
-            if (window.myChart) window.myChart.destroy(); // Destroy the previous chart instance if exists
-
-            window.myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: 'Coal Value',
-                        data: values,
-                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
-                        borderColor: 'rgba(0, 123, 255, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+                window.myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            label: trend + ' Value',
+                            data: values,
+                            backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: trend // Change this to match what the value represents
+                                },
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                }
+                            }
                         }
                     }
-                }
+                });
+            }).catch(function(error) {
+                console.error("Error loading the CSV file:", error);
+                console.log()
             });
         }
 
 
-        d3.csv("coal.csv", function(d) {
-            console.log(d);
-            return {
-                index: +d.index,
-                state: d.state,
-                year: +d.year,
-                coal: +d.coal
-            };
-        }).then(function(data) {
-            console.log(data);
-            window.coalData = data;
-            var stateCode = getQueryParam('state');
-            var trend = getQueryParam('trend') || "Coal"; // Default to Coal if not specified
-            var stateName = getStateFullName(stateCode);
-            document.getElementById('stateTitle').textContent = stateName + ' Pollution Trends';
-            document.getElementById('trendSelector').value = trend;
-            updateChart(trend, stateCode); // Update the chart after data is loaded
-        });
+
+        var stateCode = getQueryParam('state');
+        var trend = getQueryParam('trend') || "Population"; // Default to Coal if not specified
+        document.getElementById('trendSelector').value = trend;
+        updateChart(trend, stateCode); // Call this when the page loads
 
         document.getElementById('trendSelector').addEventListener('change', function() {
-            var stateCode = getQueryParam('state');
-            updateChart(this.value, stateCode);
+            updateChart(this.value, stateCode); // Call this when the trend changes
         });
 
     </script>
