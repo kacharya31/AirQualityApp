@@ -2,7 +2,7 @@ import json
 import pandas as pd
 
 # Load the original data
-o3_data = pd.read_csv('aggregated_ozone_by_state_and_year.csv')
+o3_data = pd.read_csv('aggregated_o3_by_state_and_year.csv')
 no2_data = pd.read_csv('aggregated_no2_by_state_and_year.csv')
 pm25_data = pd.read_csv('aggregated_pm25_by_state_and_year.csv')
 
