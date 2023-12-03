@@ -5,9 +5,46 @@
     <title>Pollution Levels Choropleth Map</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <style>
+        header {
+            background-color: #333;
+            padding: 10px;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+            text-align: center;
+        }
+        h2 {
+            margin: 20px 0;
+            color: #333;
+        }
         #map svg {
             height: 600px;
-            width: 1000px;
+            width: 80%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: block;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px;
+        }
+        select {
+            margin-right: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input[type="range"] {
+            margin: 0;
+            width: 200px;
         }
         .tooltip {
             position: absolute;
@@ -15,15 +52,14 @@
             width: 120px;
             height: 50px;
             padding: 2px;
-            font: 12px sans-serif;
-            background: white;
-            border: 0px;
+            font-size: 14px;
+            background-color: white;
             border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             pointer-events: none;
             opacity: 0;
-        }
-        h2 {
-            text-align: center;
+            transition: opacity 0.3s;
         }
         .legend {
             position: absolute;
@@ -52,13 +88,17 @@
     </style>
 </head>
 <body>
+    <header>
+    </header>
     <h2 id="yearTitle">Year: 2000</h2>
-    <select id="pollutantSelector">
-        <option value="ozone">Ozone (O3) - ppb</option>
-        <option value="no2">Nitrogen Dioxide (NO2) - ppb</option>
-        <option value="pm25">Particulate Matter 2.5 (PM2.5) - μg/m³</option>
-    </select>
-    <input type="range" id="yearSlider" min="2000" max="2016" step="1" value="2000">
+    <div class="controls">
+        <select id="pollutantSelector">
+            <option value="ozone">Ozone (O3) - ppb</option>
+            <option value="no2">Nitrogen Dioxide (NO2) - ppb</option>
+            <option value="pm25">Particulate Matter 2.5 (PM2.5) - μg/m³</option>
+        </select>
+        <input type="range" id="yearSlider" min="2000" max="2016" step="1" value="2000">
+    </div>
     <div id="map"></div>
     <div class="legend" id="legend"></div>
     <script>
@@ -127,6 +167,10 @@
                 .attr("class", "tooltip");
 
             svg.selectAll(".state")
+                .on("click", function(event, d) {
+                    window.location.href = '/state-trends.html?state=' + d.properties.STUSPS;
+                })
+                
                 .on("mouseover", function(event, d) {
                     tooltip.transition().duration(200).style("opacity", .9);
                     tooltip.html(d.properties.NAME + "<br/>" + d.properties[dataKey])
@@ -202,5 +246,6 @@
 
 
     </script>
+    
 </body>
 </html>
