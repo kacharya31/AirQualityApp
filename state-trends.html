@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>State Pollution Trends</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
     <style>
         header {
             background-color: #333;
@@ -32,6 +33,7 @@
         h1 {
             color: #444;
             margin-top: 20px;
+            font-size: 25px;
         }
         #chartContainer {
             width: 600px;
@@ -47,7 +49,8 @@
             height: 100%;
         }
         select {
-            margin-top: 20px;
+            margin-top: 10px;
+            margin-bottom: 30px;
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #ddd;
@@ -61,9 +64,11 @@
     </header>
     <h1 id="stateTitle">State Trends</h1>
     <select id="trendSelector">
-        <option value="trend1">Trend 1</option>
-        <option value="trend2">Trend 2</option>
-        <option value="trend3">Trend 3</option>
+        <option value="Population">Population</option>
+        <option value="Gas">Gas</option>
+        <option value="Coal">Coal</option>
+        <option value="Petroleum">Petroleum</option>
+        <option value="trend5">Trend 5</option>
     </select>
     <div id="chartContainer">
         <canvas id="trendChart"></canvas>
@@ -98,21 +103,63 @@
             return params.get(param);
         }
 
-        function updateChart(trend, state) {
-            // Placeholder: logic to update the chart based on the trend and state
-            console.log("Selected trend: " + trend + ", for state: " + state);
+        function updateChart(trend, stateCode) {
+            if (trend !== "Coal") return;
+
+            var filteredData = coalData.filter(d => d.state === stateCode);
+            var years = filteredData.map(d => d.year);
+            var values = filteredData.map(d => d.coal);
+
             var ctx = document.getElementById('trendChart').getContext('2d');
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.fillText("Placeholder for " + trend + " of " + state, 10, ctx.canvas.height / 2);
+            if (window.myChart) window.myChart.destroy(); // Destroy the previous chart instance if exists
+
+            window.myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Coal Value',
+                        data: values,
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         }
 
-        var stateCode = getQueryParam('state');
-        var stateName = getStateFullName(stateCode);
-        document.getElementById('stateTitle').textContent = stateName + ' Pollution Trends';
-        updateChart(document.getElementById('trendSelector').value, stateName);
-        document.getElementById('trendSelector').addEventListener('change', function() {
-            updateChart(this.value, stateName);
+
+        d3.csv("coal.csv", function(d) {
+            console.log(d);
+            return {
+                index: +d.index,
+                state: d.state,
+                year: +d.year,
+                coal: +d.coal
+            };
+        }).then(function(data) {
+            console.log(data);
+            window.coalData = data;
+            var stateCode = getQueryParam('state');
+            var trend = getQueryParam('trend') || "Coal"; // Default to Coal if not specified
+            var stateName = getStateFullName(stateCode);
+            document.getElementById('stateTitle').textContent = stateName + ' Pollution Trends';
+            document.getElementById('trendSelector').value = trend;
+            updateChart(trend, stateCode); // Update the chart after data is loaded
         });
+
+        document.getElementById('trendSelector').addEventListener('change', function() {
+            var stateCode = getQueryParam('state');
+            updateChart(this.value, stateCode);
+        });
+
     </script>
 </body>
 </html>
