@@ -203,10 +203,10 @@
                 <p><strong>Ozone (O3):</strong> ppb (parts per billion)</p>
                 <p><strong>Nitrogen Dioxide (NO2):</strong> ppb (parts per billion)</p>
                 <p><strong>Particulate Matter 2.5 (PM2.5):</strong> μg/m³ (micrograms per cubic meter)</p>
-                <p><strong>Coal:</strong> million metric tons of CO</p>
-                <p><strong>Gas:</strong> million metric tons of CO</p>
-                <p><strong>Petroleum:</strong> million metric tons of CO</p>
-                <p><strong>Population Density:</strong> persons per square mile</p>
+                <p><strong>Coal Emissions:</strong> million metric tons of CO</p>
+                <p><strong>Gas Emissions:</strong> million metric tons of CO</p>
+                <p><strong>Petroleum Emissions:</strong> million metric tons of CO</p>
+                <p><strong>Population Density Emissions:</strong> persons per square mile</p>
             </div>
             <div class="legend" id="legend"></div>
         </div>
@@ -316,17 +316,23 @@
                 var petroleum = d.properties[`Petroleum_${year}`] || "N/A";
                 var popDensity = d.properties[`Population Density_${year}`] || "N/A";
 
-                // Construct the HTML content for the tooltip
-                // Make sure the tooltip content is correctly formatted
+                function formatNumber(value) {
+                // Check if the value is numeric and not null or undefined
+                if (value !== null && value !== undefined && !isNaN(Number(value))) {
+                    return parseFloat(value).toFixed(2);
+                }
+                return "N/A"; // Fallback for non-numeric values
+                }
+
                 var tooltipContent = `
-                    <strong>${d.properties.NAME}</strong><br><br>
-                    <strong>Main Data:</strong><br>
-                    ${pollutantDisplayName}: ${parseFloat(pollutantValue).toFixed(2)}<br><br>
-                    <strong>Additional Data:</strong><br>
-                    Coal: ${parseFloat(coal).toFixed(2)}<br>
-                    Gas: ${parseFloat(gas).toFixed(2)}<br>
-                    Petroleum: ${parseFloat(petroleum).toFixed(2)}<br>
-                    Population Density: ${parseFloat(popDensity).toFixed(2)}
+                <strong>${d.properties.NAME || "N/A"}</strong><br><br>
+                <strong>Main Data:</strong><br>
+                ${pollutantDisplayName}: ${formatNumber(pollutantValue)}<br><br>
+                <strong>Additional Data:</strong><br>
+                Coal: ${formatNumber(coal)}<br>
+                Gas: ${formatNumber(gas)}<br>
+                Petroleum: ${formatNumber(petroleum)}<br>
+                Population Density: ${formatNumber(popDensity)}
                 `;
 
                 tooltip.html(tooltipContent)
