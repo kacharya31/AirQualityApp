@@ -174,7 +174,12 @@ gas_data_df = gas_data_df[(gas_data_df['Year'] >= 2000) & (gas_data_df['Year'] <
 
 gas_data_df['State'] = gas_data_df['State'].map(state_names_to_abbreviations)
 
-print(population_density_df)
-print(petroleum_data_df)
-print(coal_long_format)
-print(gas_data_df)
+population_density_df.to_csv('population.csv')
+petroleum_data_df.to_csv('petroleum.csv')
+coal_long_format.to_csv('coal.csv')
+gas_data_df.to_csv('gas_data.csv')
+
+# print(population_density_df)
+# print(petroleum_data_df)
+# print(coal_long_format)
+# print(gas_data_df)
