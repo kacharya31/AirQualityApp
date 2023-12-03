@@ -25,71 +25,102 @@
         h2 {
             text-align: center;
         }
+        .legend {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            font: 12px sans-serif;
+        }
+        .legend-key {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .legend-title {
+            fill: #333; /* Color of the title text */
+            font-family: Arial, sans-serif; /* Font of the title */
+            /* Add any other styles you want for the legend title */
+        }
     </style>
 </head>
 <body>
     <h2 id="yearTitle">Year: 2000</h2>
     <select id="pollutantSelector">
-        <option value="ozone">Ozone (O3)</option>
-        <option value="no2">Nitrogen Dioxide (NO2)</option>
-        <option value="pm25">Particulate Matter 2.5 (PM2.5)</option>
+        <option value="ozone">Ozone (O3) - ppb</option>
+        <option value="no2">Nitrogen Dioxide (NO2) - ppb</option>
+        <option value="pm25">Particulate Matter 2.5 (PM2.5) - μg/m³</option>
     </select>
     <input type="range" id="yearSlider" min="2000" max="2016" step="1" value="2000">
     <div id="map"></div>
+    <div class="legend" id="legend"></div>
     <script>
         // Load GeoJSON data
         d3.json("modified_states_geojson.json").then(function(geoData) {
             renderMap(geoData);
         });
 
-        function getColorScale(pollutant) {
+        function getColorScale(pollutant, values) {
             // Define color scales for each pollutant
             var scales = {
-                'ozone': d3.scaleLinear().range(["lightblue", "darkblue"]),
-                'no2': d3.scaleLinear().range(["lightcoral", "darkred"]),
-                'pm25': d3.scaleLinear().range(["lightgreen", "darkgreen"])
+                'ozone': d3.scaleQuantize().range(["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"]),
+                'no2': d3.scaleQuantize().range(["#feedde", "#fdbe85", "#fd8d3c", "#e6550d", "#a63603"]),
+                'pm25': d3.scaleQuantize().range(["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"])
             };
-            return scales[pollutant];
+            // Calculate the extent of the values for the given pollutant
+            const extent = d3.extent(values, d => d.properties[pollutant + '_2016']); // Use year 2016 for the demo
+            // Set the domain for the color scale based on the extent
+            return scales[pollutant].domain(extent);
         }
 
         function renderMap(geoData) {
             var projection = d3.geoAlbersUsa();
             var path = d3.geoPath().projection(projection);
             var svg = d3.select("#map").append("svg");
+            var initialYear = +document.getElementById('yearSlider').value;
+            var initialPollutant = document.getElementById('pollutantSelector').value;
+            var colorScale = getColorScale(initialPollutant, geoData.features);
 
-            // Initial render of the map
-            var initialPollutant = 'ozone';
-            var colorScale = getColorScale(initialPollutant);
-            updateMap(+document.getElementById('yearSlider').value, initialPollutant, geoData, colorScale, svg, path);
+            // Initial render of the map with the default year and pollutant
+            updateMap(initialYear, initialPollutant, geoData, colorScale, svg, path);
+            updateLegend(initialYear, initialPollutant, geoData, colorScale); // Make sure geoData is passed correctly
 
-            // Event listener for the pollutant selector
-            d3.select("#pollutantSelector").on("change", function() {
-                var selectedPollutant = this.value;
-                var colorScale = getColorScale(selectedPollutant);
-                updateMap(+document.getElementById('yearSlider').value, selectedPollutant, geoData, colorScale, svg, path);
-            });
-
-            // Event listener for the year slider
             d3.select("#yearSlider").on("input", function() {
                 var selectedYear = +this.value;
                 var selectedPollutant = document.getElementById('pollutantSelector').value;
-                var colorScale = getColorScale(selectedPollutant);
+                var colorScale = getColorScale(selectedPollutant, geoData.features);
                 updateMap(selectedYear, selectedPollutant, geoData, colorScale, svg, path);
-                document.getElementById('yearTitle').innerText = 'Year: ' + selectedYear; // Update the title
+                document.getElementById('yearTitle').innerText = 'Year: ' + selectedYear;
+                updateLegend(selectedYear, selectedPollutant, geoData, colorScale);
+            });
+
+            // In the event listener for the pollutant selector:
+            d3.select("#pollutantSelector").on("change", function() {
+                var selectedYear = +document.getElementById('yearSlider').value;
+                var selectedPollutant = this.value;
+                var colorScale = getColorScale(selectedPollutant, geoData.features);
+                updateMap(selectedYear, selectedPollutant, geoData, colorScale, svg, path);
+                updateLegend(selectedYear, selectedPollutant, geoData, colorScale);
             });
         }
 
         function updateMap(year, pollutant, geoData, colorScale, svg, path) {
             var dataKey = pollutant + '_' + year;
-            colorScale.domain([d3.min(geoData.features, d => d.properties[dataKey]), d3.max(geoData.features, d => d.properties[dataKey])]);
-
+            // Set the fill for each state based on the pollutant data
             svg.selectAll(".state")
                 .data(geoData.features)
                 .join("path")
                 .attr("class", "state")
                 .attr("d", path)
                 .transition()
-                .style("fill", function(d) { return colorScale(d.properties[dataKey]); });
+                .style("fill", d => colorScale(d.properties[dataKey]));
 
             // Tooltip
             var tooltip = d3.select("body").append("div")
@@ -106,6 +137,70 @@
                     tooltip.transition().duration(500).style("opacity", 0);
                 });
         }
+
+        function updateLegend(year, pollutant, geoData, colorScale) {
+            var legend = d3.select("#legend");
+            legend.selectAll("*").remove(); // Clear existing legend
+
+                // Add legend title
+            legend.append("text")
+                .attr("class", "legend-title")
+                .attr("x", 0) // x position of the title
+                .attr("y", -10) // y position of the title
+                .style("font-size", "16px") // font size of the title
+                .style("font-weight", "bold") // font weight of the title
+                .text("Legend"); // text content of the title
+
+            if (!geoData || !geoData.features) {
+                console.error('GeoData is not loaded properly.');
+                return;
+            }
+
+            // Get the data for the current year and pollutant
+            var dataKey = pollutant + '_' + year;
+            var dataValues = geoData.features.map(function(d) {
+                return d.properties[dataKey];
+            }).filter(function(value) {
+                return value != null;
+            });
+
+            // Update color scale domain based on the current year's data values
+            colorScale.domain(d3.extent(dataValues));
+
+            // Calculate the number of steps in the legend
+            var numberOfSteps = colorScale.range().length;
+            var range = colorScale.range();
+            var domain = colorScale.domain();
+            var stepValue = (domain[1] - domain[0]) / numberOfSteps;
+
+            // Create legend items based on the quantized scale intervals
+            var legendItems = range.map(function(color, i) {
+                var extent = colorScale.invertExtent(color);
+                return {
+                    color: color,
+                    range: extent,
+                    text: extent[0].toFixed(2) + " - " + (extent[0] + stepValue).toFixed(2)
+                };
+            });
+
+            // Append legend items to the legend container
+            legend.selectAll(".legend-key")
+                .data(legendItems)
+                .enter().append("div")
+                .attr("class", "legend-key")
+                .each(function(d, i) {
+                    var key = d3.select(this);
+                    key.append("span")
+                        .attr("class", "legend-color")
+                        .style("background-color", d.color);
+
+                    key.append("span")
+                        .text(d.text);
+                });
+        }
+
+
+
     </script>
 </body>
 </html>
