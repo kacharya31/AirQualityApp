@@ -6,7 +6,7 @@ This package consists of a web-based visualization tool designed to display poll
 ## INSTALLATION
 - **Prerequisites**: Ensure you have a modern web browser installed (e.g., Chrome, Firefox, Safari).
 - **Cloning and Setup**: Clone this repository to your local machine.
-- **Dependencies**: No additional installations are required as the project uses CDN links for D3.js and Chart.js.
+- **Dependencies**: No additional installations are required as the project uses links for D3.js and Chart.js.
 
 ## EXECUTION
 ### Running the Tool:
@@ -17,3 +17,6 @@ This package consists of a web-based visualization tool designed to display poll
 5. Click on any state to view detailed pollution trends, which will redirect you to the `state-trends.html` page.
 6. On the `state-trends.html` page, use the dropdown to select different pollution or demographic trends for the chosen state.
 7. Explore different features such as pollutant selection, year range, and state-specific data.
+
+## DEMO
+https://youtu.be/49PTkt9q-OM
