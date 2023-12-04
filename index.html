@@ -291,7 +291,7 @@
 
             svg.selectAll(".state")
                     .on("click", function(event, d) {
-                window.location.href = '/state-trends.html?state=' + d.properties.STUSPS;
+                window.location.href = '/state-trends.html?state=' + d.properties.STUSPS + '&name=' + encodeURIComponent(d.properties.NAME);
             })
                 
             .on("mouseover", function(event, d) {
@@ -305,6 +305,7 @@
                 var popDensity = d.properties[`Population Density_${year}`] || "N/A";
 
                 function formatNumber(value) {
+
                 if (value !== null && value !== undefined && !isNaN(Number(value))) {
                     return parseFloat(value).toFixed(2);
                 }

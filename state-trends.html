@@ -160,10 +160,13 @@
             });
         }
         var stateCode = getQueryParam('state');
+        var stateName = decodeURIComponent(getQueryParam('name'));
         var trend = getQueryParam('trend') || "Population";
         document.getElementById('trendSelector').value = trend;
         updateChart(trend, stateCode);
-
+        if (stateName) {
+            document.getElementById('stateTitle').textContent = stateName + " Trends";
+        }
         document.getElementById('trendSelector').addEventListener('change', function() {
             updateChart(this.value, stateCode);
         });
