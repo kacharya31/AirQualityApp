@@ -106,7 +106,7 @@
         }
 
         function updateChart(trend, stateCode) {
-            var csvFile = trend.toLowerCase() + ".csv";
+            var csvFile = "cofactor files/" + trend.toLowerCase() + ".csv";
             var valueKey = trend.charAt(0).toLowerCase() + trend.slice(1);
             
             d3.csv(csvFile, function(d) {
@@ -142,7 +142,7 @@
                                 beginAtZero: false,
                                 title: {
                                     display: true,
-                                    text: trend // Change this to match what the value represents
+                                    text: trend
                                 },
                             },
                             x: {
@@ -163,12 +163,12 @@
 
 
         var stateCode = getQueryParam('state');
-        var trend = getQueryParam('trend') || "Population"; // Default to Coal if not specified
+        var trend = getQueryParam('trend') || "Population";
         document.getElementById('trendSelector').value = trend;
-        updateChart(trend, stateCode); // Call this when the page loads
+        updateChart(trend, stateCode);
 
         document.getElementById('trendSelector').addEventListener('change', function() {
-            updateChart(this.value, stateCode); // Call this when the trend changes
+            updateChart(this.value, stateCode);
         });
 
     </script>
