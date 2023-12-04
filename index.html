@@ -79,9 +79,9 @@
         }
         .tooltip {
             position: absolute;
-            text-align: left; /* Align text to the left */
-            padding: 10px; /* Adjust padding as needed */
-            max-width: 300px; /* Max width, can adjust as needed */
+            text-align: left;
+            padding: 10px;
+            max-width: 300px;
             font-size: 14px;
             background-color: white;
             border-radius: 8px;
@@ -234,7 +234,7 @@
                 })
             };
 
-            var projection = d3.geoAlbersUsa(); // Albers projection is commonly used for the USA, which by default excludes AK and HI
+            var projection = d3.geoAlbersUsa();
             var path = d3.geoPath().projection(projection);
             var svg = d3.select("#map").append("svg");
             var initialYear = +document.getElementById('yearSlider').value;
@@ -297,11 +297,7 @@
             .on("mouseover", function(event, d) {
                 var selectedPollutant = document.getElementById('pollutantSelector').value;
                 var year = document.getElementById('yearSlider').value;
-
-                // Get the display name for the pollutant
                 var pollutantDisplayName = pollutantDisplayNames[selectedPollutant] || selectedPollutant;
-
-                // Retrieve the data for the current year and the selected pollutant
                 var pollutantValue = d.properties[selectedPollutant + "_" + year].toFixed(2);
                 var coal = d.properties[`Coal_${year}`] || "N/A";
                 var gas = d.properties[`gas_data_${year}`] || "N/A";
@@ -309,7 +305,6 @@
                 var popDensity = d.properties[`Population Density_${year}`] || "N/A";
 
                 function formatNumber(value) {
-                // Check if the value is numeric and not null or undefined
                 if (value !== null && value !== undefined && !isNaN(Number(value))) {
                     return parseFloat(value).toFixed(2);
                 }
@@ -339,9 +334,7 @@
 
         function updateLegend(year, pollutant, filteredGeoData, colorScale) {
             var legend = d3.select("#legend");
-            legend.selectAll("*").remove(); // Clear existing legend
-
-                // Add legend title
+            legend.selectAll("*").remove();
             legend.append("text")
                 .attr("class", "legend-title")
                 .attr("x", 0)
