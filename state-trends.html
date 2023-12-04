@@ -106,7 +106,7 @@
         }
 
         function updateChart(trend, stateCode) {
-            var csvFile = "cofactors/" + trend.toLowerCase() + ".csv";
+            var csvFile = "formatted_data/" + trend.toLowerCase() + ".csv";
             var valueKey = trend.charAt(0).toLowerCase() + trend.slice(1);
             
             d3.csv(csvFile, function(d) {
