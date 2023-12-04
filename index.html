@@ -13,16 +13,16 @@
         }
 
         #map-container {
-            flex: 1; /* Take up the remaining space */
+            flex: 1;
         }
 
         #description-container {
-            flex-basis: 300px; /* Fixed width for the description container */
-            margin-left: 20px; /* Spacing between map and description */
+            flex-basis: 300px;
+            margin-left: 20px;
         }
 
         #legend {
-            margin-top: 20px; /* Spacing between units description and legend */
+            margin-top: 20px;
         }
 
         body {
@@ -90,7 +90,6 @@
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s;
-            /* Add a slight margin to prevent the tooltip from touching the cursor */
             margin-top: 20px;
         }
         .tooltip-content {
@@ -167,10 +166,10 @@
             order: -1;
         }
         .state {
-        fill: #aaa; /* Default fill color, it will be overridden by D3 styles */
-        stroke: #fff; /* Color of the state boundaries */
-        stroke-width: 2; /* Thickness of the state boundaries */
-        stroke-linejoin: round; /* Smooths the corners where paths meet */
+        fill: #aaa;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linejoin: round;
         }
 
     </style>
@@ -228,7 +227,6 @@
         }
 
         function renderMap(geoData) {
-            // Filter out Alaska and Hawaii by their state codes (assuming they are 'AK' and 'HI')
             var filteredGeoData = {
                 ...geoData,
                 features: geoData.features.filter(function(d) {
@@ -243,7 +241,6 @@
             var initialPollutant = document.getElementById('pollutantSelector').value;
             var colorScale = getColorScale(initialPollutant, filteredGeoData.features);
 
-            // Bind the filtered data to the SVG elements
             svg.selectAll(".state")
                 .data(filteredGeoData.features)
                 .enter()
@@ -252,9 +249,8 @@
                 .attr("d", path)
                 .style("fill", d => colorScale(d.properties[initialPollutant + '_' + initialYear]));
 
-            // Initial render of the map with the default year and pollutant
             updateMap(initialYear, initialPollutant, filteredGeoData, colorScale, svg, path);
-            updateLegend(initialYear, initialPollutant, filteredGeoData, colorScale); // Make sure geoData is passed correctly
+            updateLegend(initialYear, initialPollutant, filteredGeoData, colorScale);
 
             d3.select("#yearSlider").on("input", function() {
                 var selectedYear = +this.value;
@@ -265,7 +261,6 @@
                 updateLegend(selectedYear, selectedPollutant, filteredGeoData, colorScale);
             });
 
-            // In the event listener for the pollutant selector:
             d3.select("#pollutantSelector").on("change", function() {
                 var selectedYear = +document.getElementById('yearSlider').value;
                 var selectedPollutant = this.value;
@@ -277,7 +272,6 @@
 
         function updateMap(year, pollutant, filteredGeoData, colorScale, svg, path) {
             var dataKey = pollutant + '_' + year;
-            // Set the fill for each state based on the pollutant data
 
             const pollutantDisplayNames = {
             ozone: "Ozone",
@@ -292,7 +286,6 @@
                 .attr("d", path)
                 .style("fill", d => colorScale(d.properties[dataKey]))
 
-            // Tooltip
             var tooltip = d3.select("body").append("div")
                 .attr("class", "tooltip");
 
@@ -302,7 +295,6 @@
             })
                 
             .on("mouseover", function(event, d) {
-                // Get the currently selected pollutant from the dropdown
                 var selectedPollutant = document.getElementById('pollutantSelector').value;
                 var year = document.getElementById('yearSlider').value;
 
@@ -321,7 +313,7 @@
                 if (value !== null && value !== undefined && !isNaN(Number(value))) {
                     return parseFloat(value).toFixed(2);
                 }
-                return "N/A"; // Fallback for non-numeric values
+                return "N/A";
                 }
 
                 var tooltipContent = `
@@ -352,18 +344,17 @@
                 // Add legend title
             legend.append("text")
                 .attr("class", "legend-title")
-                .attr("x", 0) // x position of the title
-                .attr("y", -10) // y position of the title
-                .style("font-size", "20px") // font size of the title
-                .style("font-weight", "bold") // font weight of the title
-                .text("Legend"); // text content of the title
+                .attr("x", 0)
+                .attr("y", -10)
+                .style("font-size", "20px")
+                .style("font-weight", "bold")
+                .text("Legend");
 
             if (!filteredGeoData || !filteredGeoData.features) {
                 console.error('filteredGeoData is not loaded properly.');
                 return;
             }
 
-            // Get the data for the current year and pollutant
             var dataKey = pollutant + '_' + year;
             var dataValues = filteredGeoData.features.map(function(d) {
                 return d.properties[dataKey];
@@ -371,16 +362,13 @@
                 return value != null;
             });
 
-            // Update color scale domain based on the current year's data values
             colorScale.domain(d3.extent(dataValues));
 
-            // Calculate the number of steps in the legend
             var numberOfSteps = colorScale.range().length;
             var range = colorScale.range();
             var domain = colorScale.domain();
             var stepValue = (domain[1] - domain[0]) / numberOfSteps;
 
-            // Create legend items based on the quantized scale intervals
             var legendItems = range.map(function(color, i) {
                 var extent = colorScale.invertExtent(color);
                 return {
@@ -390,7 +378,6 @@
                 };
             });
 
-            // Append legend items to the legend container
             legend.selectAll(".legend-key")
                 .data(legendItems)
                 .enter().append("div")

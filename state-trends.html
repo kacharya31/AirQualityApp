@@ -106,7 +106,7 @@
         }
 
         function updateChart(trend, stateCode) {
-            var csvFile = "cofactor files/" + trend.toLowerCase() + ".csv";
+            var csvFile = "cofactors/" + trend.toLowerCase() + ".csv";
             var valueKey = trend.charAt(0).toLowerCase() + trend.slice(1);
             
             d3.csv(csvFile, function(d) {
@@ -122,7 +122,7 @@
                 var values = filteredData.map(d => d.value);
 
                 var ctx = document.getElementById('trendChart').getContext('2d');
-                if (window.myChart) window.myChart.destroy(); // Destroy the previous chart instance if exists
+                if (window.myChart) window.myChart.destroy();
 
                 window.myChart = new Chart(ctx, {
                     type: 'line',
